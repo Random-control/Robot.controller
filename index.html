@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TinkerBott — Prestige Drive Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --gold: #d4af37;
+    --gold-light: #f5d67b;
+    --gold-deep: #9a7b1c;
+    --ink: #0a0a0f;
+    --card: rgba(255,255,255,0.045);
+    --card-border: rgba(212,175,55,0.28);
+    --text: #f5efe0;
+    --muted: #a89f8d;
+  }
+  body {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 34px 16px 48px; user-select: none; -webkit-user-select: none;
+    background:
+      radial-gradient(900px 480px at 50% -120px, rgba(212,175,55,0.22), transparent 60%),
+      radial-gradient(700px 500px at 85% 110%, rgba(212,175,55,0.08), transparent 60%),
+      linear-gradient(180deg, #101018 0%, #0a0a0f 55%, #060609 100%);
+    background-attachment: fixed;
+  }
+  .wrap { width: 100%; max-width: 620px; display: flex; flex-direction: column; align-items: center; }
+
+  /* ---------- Header ---------- */
+  .crown { font-size: 30px; filter: drop-shadow(0 2px 10px rgba(212,175,55,0.55)); }
+  h1 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 40px; font-weight: 800; letter-spacing: 6px; text-transform: uppercase;
+    margin: 6px 0 2px; text-align: center;
+    background: linear-gradient(180deg, #fdf3c9 0%, var(--gold-light) 38%, var(--gold) 62%, var(--gold-deep) 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .tagline {
+    letter-spacing: 4px; text-transform: uppercase; font-size: 11px; color: var(--muted);
+    margin: 0 0 6px; text-align: center;
+  }
+  .rule { width: 210px; height: 1px; margin: 10px 0 22px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent); position: relative; }
+  .rule::after { content: "◆"; position: absolute; left: 50%; top: -8px; transform: translateX(-50%);
+    color: var(--gold); font-size: 11px; background: transparent; }
+  p.sub { color: var(--muted); margin: 0 0 4px; font-size: 13.5px; text-align: center; line-height: 1.65; max-width: 480px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    width: 100%; background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 20px; padding: 22px 22px 24px; margin-top: 18px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .card h2 {
+    font-family: "Playfair Display", Georgia, serif; font-size: 19px; font-weight: 600;
+    letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold-light);
+    margin: 0 0 16px; text-align: center;
+  }
+
+  /* ---------- Connection ---------- */
+  #connectBtn {
+    background: linear-gradient(180deg, #f7e08a 0%, var(--gold) 55%, #b8912a 100%);
+    color: #231a02; border: 1px solid #ffe9a3; border-radius: 999px;
+    font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 14px 34px; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(212,175,55,0.35), inset 0 1px 0 rgba(255,255,255,0.65);
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  }
+  #connectBtn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06);
+    box-shadow: 0 14px 32px rgba(212,175,55,0.45), inset 0 1px 0 rgba(255,255,255,0.65); }
+  #connectBtn:disabled { background: linear-gradient(180deg, #4b4433, #38311f); color: #9c8f6a;
+    border-color: #57503a; cursor: default; box-shadow: none; }
+  #status {
+    margin-top: 16px; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--gold-light); border: 1px solid var(--card-border); border-radius: 999px;
+    padding: 7px 18px; background: rgba(0,0,0,0.35); min-height: 20px; text-align: center;
+  }
+
+  /* ---------- Controls rows ---------- */
+  .ctl { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+    font-size: 14.5px; padding: 9px 0; flex-wrap: wrap; text-align: center; }
+  .ctl .lbl { letter-spacing: 1.6px; text-transform: uppercase; font-size: 12px; color: var(--muted); font-weight: 600; }
+  #powerVal { font-weight: 700; color: var(--gold-light); font-size: 17px; min-width: 52px; }
+  #gpMode { color: #7ee2ae; font-weight: 700; font-size: 13px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 2px; text-align: center; line-height: 1.6; }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 250px; height: 6px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-light)); outline: none; cursor: pointer;
+    box-shadow: 0 2px 10px rgba(212,175,55,0.35); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, var(--gold-deep));
+    border: 1px solid #ffedb0; box-shadow: 0 3px 10px rgba(0,0,0,0.55); cursor: pointer; }
+  input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, var(--gold-deep));
+    border: 1px solid #ffedb0; box-shadow: 0 3px 10px rgba(0,0,0,0.55); cursor: pointer; }
+
+  input[type=color] { width: 74px; height: 42px; border: 1px solid var(--gold); border-radius: 12px;
+    background: rgba(0,0,0,0.4); cursor: pointer; padding: 4px;
+    box-shadow: 0 4px 16px rgba(212,175,55,0.25), inset 0 0 0 2px rgba(0,0,0,0.4); }
+
+  /* ---------- Drive pad ---------- */
+  .pad { display: grid; gap: 12px; grid-template-columns: repeat(3, 88px); grid-template-rows: repeat(3, 88px); }
+  .pad button {
+    background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+    color: var(--gold-light); border: 1px solid var(--card-border);
+    border-radius: 18px; font-size: 30px; cursor: pointer; touch-action: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+    transition: all .12s ease;
+  }
+  .pad button.active, .pad button:active {
+    background: linear-gradient(180deg, #f7e08a, var(--gold) 60%, #b8912a); color: #231a02;
+    border-color: #ffe9a3; box-shadow: 0 0 24px rgba(212,175,55,0.55); }
+  .up    { grid-column: 2; grid-row: 1; }
+  .left  { grid-column: 1; grid-row: 2; }
+  .stop  { grid-column: 2; grid-row: 2; font-size: 14px !important; font-weight: 700; letter-spacing: 2px;
+    background: linear-gradient(180deg, #8e2434, #5f1220) !important; border-color: rgba(255,120,120,0.4) !important; color: #ffd9d9 !important; }
+  .right { grid-column: 3; grid-row: 2; }
+  .down  { grid-column: 2; grid-row: 3; }
+
+  .keys { margin-top: 16px; color: var(--muted); font-size: 13.5px; text-align: center; line-height: 1.8; max-width: 540px; }
+  kbd {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(212,175,55,0.4); border-bottom-width: 3px;
+    border-radius: 6px; padding: 1px 8px; font-family: inherit; color: var(--gold-light); font-size: 12.5px;
+  }
+  #err { color: #ff9d9d; max-width: 520px; text-align: center; font-size: 13.5px; margin-top: 12px; line-height: 1.6; }
+
+  /* ---------- Messenger ---------- */
+  .messenger { width: 100%; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .tabs button {
+    background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--card-border); border-radius: 999px;
+    padding: 9px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; letter-spacing: 0.4px;
+    transition: all .15s ease;
+  }
+  .tabs button.selected { background: linear-gradient(180deg, #f7e08a, var(--gold) 60%, #b8912a);
+    color: #231a02; border-color: #ffe9a3; box-shadow: 0 6px 18px rgba(212,175,55,0.35); }
+  .panel { display: none; background: rgba(0,0,0,0.32); border: 1px solid rgba(212,175,55,0.18);
+    border-radius: 16px; padding: 18px; }
+  .panel.show { display: block; }
+  .panel p { color: #d9d2bf; font-size: 14px; line-height: 1.65; margin: 0 0 12px; }
+  .panel .row { display: flex; gap: 8px; }
+  .panel input[type=text] {
+    flex: 1; background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 11px 14px; font-size: 15px; min-width: 0; outline: none;
+  }
+  .panel input[type=text]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,175,55,0.18); }
+  .panel .sendBtn {
+    background: linear-gradient(180deg, #f7e08a, var(--gold) 60%, #b8912a); color: #231a02; border: 1px solid #ffe9a3;
+    border-radius: 10px; padding: 11px 20px; font-size: 14.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(212,175,55,0.3);
+  }
+  .panel a.meetBtn {
+    display: inline-block; background: linear-gradient(180deg, #f7e08a, var(--gold) 60%, #b8912a); color: #231a02;
+    text-decoration: none; border: 1px solid #ffe9a3; border-radius: 10px; padding: 11px 20px;
+    font-size: 14.5px; font-weight: 700; box-shadow: 0 6px 16px rgba(212,175,55,0.3);
+  }
+  .panel .note { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+  #msgStatus, #ttsStatus { font-size: 13px; color: #7ee2ae; min-height: 16px; margin-top: 8px; }
+  .footer { margin-top: 26px; color: #6f675a; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-align: center; }
+
+  /* ---------- Admin & Gemini ---------- */
+  .pinrow { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .pinrow input[type=password], .pinrow input[type=text] {
+    background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 11px 14px; font-size: 15px; outline: none;
+  }
+  .pinrow input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,175,55,0.18); }
+  #pinInput { width: 160px; text-align: center; letter-spacing: 4px; }
+  #apiKeyInput { flex: 1; min-width: 220px; }
+  #modelInput { width: 215px; }
+  #chatInput { flex: 1; min-width: 200px; }
+  .goldbtn {
+    background: linear-gradient(180deg, #f7e08a, var(--gold) 60%, #b8912a); color: #231a02; border: 1px solid #ffe9a3;
+    border-radius: 10px; padding: 11px 20px; font-size: 14.5px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 16px rgba(212,175,55,0.3);
+  }
+  .goldbtn:disabled { filter: grayscale(0.6); cursor: default; box-shadow: none; }
+  .ghostbtn { background: transparent; color: var(--muted); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; cursor: pointer; }
+  #pinErr { color: #ff9d9d; font-size: 13px; min-height: 16px; margin-top: 8px; text-align: center; }
+  #chatBox {
+    width: 100%; height: 260px; overflow-y: auto; background: rgba(0,0,0,0.32);
+    border: 1px solid rgba(212,175,55,0.18); border-radius: 16px; padding: 14px;
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;
+  }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14.5px; line-height: 1.55;
+    white-space: pre-wrap; word-wrap: break-word; }
+  .msg.user { align-self: flex-end; background: linear-gradient(180deg, #f7e08a, var(--gold) 70%, #c39a2e);
+    color: #231a02; font-weight: 500; border-bottom-right-radius: 4px; }
+  .msg.ai { align-self: flex-start; background: rgba(255,255,255,0.07); color: var(--text);
+    border: 1px solid rgba(212,175,55,0.22); border-bottom-left-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crown">👑</div>
+  <h1>TinkerBott</h1>
+  <p class="tagline">Prestige Drive Console</p>
+  <div class="rule"></div>
+  <p class="sub">Command your ACEBOTT car from this laptop over Bluetooth.<br>The car must be ON (batteries) and nearby, running the Bluetooth program.</p>
+
+  <div class="card">
+    <h2>Connection</h2>
+    <button id="connectBtn">Connect to Car</button>
+    <div id="status">Not connected</div>
+    <div id="err"></div>
+  </div>
+
+  <div class="card">
+    <h2>Drive</h2>
+    <div class="pad">
+      <button class="up"    data-dir="F" aria-label="Forward">▲</button>
+      <button class="left"  data-dir="L" aria-label="Left">◀</button>
+      <button class="stop"  data-dir="S" aria-label="Stop">STOP</button>
+      <button class="right" data-dir="R" aria-label="Right">▶</button>
+      <button class="down"  data-dir="B" aria-label="Backward">▼</button>
+    </div>
+    <div class="keys">
+      Keyboard: <kbd>W</kbd>/<kbd>↑</kbd> forward &nbsp; <kbd>S</kbd>/<kbd>↓</kbd> back &nbsp;
+      <kbd>A</kbd>/<kbd>←</kbd> left &nbsp; <kbd>D</kbd>/<kbd>→</kbd> right &nbsp; release = stop
+    </div>
+    <div id="gpStatus" class="keys">🎮 PS4 controller: not detected yet — pair it with the laptop or plug it in by USB, then press any button.</div>
+  </div>
+
+  <div class="card">
+    <h2>Performance &amp; Style</h2>
+    <div class="ctl">
+      <span class="lbl">⚡ Max Power</span>
+      <input type="range" id="power" min="20" max="100" value="100" step="5">
+      <span id="powerVal">100%</span> <span id="gpMode"></span>
+    </div>
+    <div class="ctl">
+      <span class="lbl">🎨 Headlight Color</span>
+      <input type="color" id="colorPick" value="#ffffff">
+    </div>
+    <div class="hint">Pick any color — the car's lights change when you close the picker (car must be connected).</div>
+  </div>
+
+  <div class="card messenger">
+    <h2>📨 Messenger</h2>
+    <div class="tabs">
+      <button data-mode="led" class="selected">💬 LED message</button>
+      <button data-mode="robot">🤖 Robot voice</button>
+      <button data-mode="live">🎤 Live voice</button>
+    </div>
+
+    <div class="panel show" id="panel-led">
+      <p>Type a message — the car stops, then scrolls your words across its LED screen. Works with just the car, nothing else needed. You must be connected to the car (button at the top).</p>
+      <div class="row">
+        <input type="text" id="msgText" maxlength="60" placeholder="e.g. DINNER IS READY">
+        <button class="sendBtn" id="msgSend">Send to car</button>
+      </div>
+      <div id="msgStatus"></div>
+    </div>
+
+    <div class="panel" id="panel-robot">
+      <p>Type a message and this device speaks it in a robot voice. <b>To make the voice come out of the car:</b> open this same page on the phone that's strapped to the car, type (or paste) the message there, and tap Speak.</p>
+      <div class="row">
+        <input type="text" id="ttsText" maxlength="120" placeholder="e.g. Hello. Dinner is ready.">
+        <button class="sendBtn" id="ttsSpeak">🤖 Speak</button>
+      </div>
+      <div id="ttsStatus"></div>
+    </div>
+
+    <div class="panel" id="panel-live">
+      <p>Talk live through the car: strap your phone to the car, start a Meet call on the laptop, join the same call on the phone (camera on, mic muted on the phone side). Your voice comes out of the phone on the car — and she can talk back.</p>
+      <a class="meetBtn" href="https://meet.google.com" target="_blank" rel="noopener">🎤 Open Google Meet</a>
+      <p class="note">On the laptop: New meeting → Start an instant meeting → copy the link → open it on the phone.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>✨ Gemini AI — Ask Anything</h2>
+    <div id="chatBox"></div>
+    <div class="pinrow" style="width:100%;">
+      <input type="text" id="chatInput" placeholder="Ask about anything you don't understand…">
+      <button class="goldbtn" id="chatSend">Ask</button>
+    </div>
+    <div class="hint" style="margin-top:10px;">Gemini explains anything — the car, the controls, coding, or homework stuff.<br>It needs an API key, which lives in the secret Admin tab.</div>
+  </div>
+
+  <div class="card" id="adminCard" style="display:none;">
+    <h2>🔐 Admin</h2>
+    <div id="pinRow">
+      <p class="hint">Enter the admin code to continue.</p>
+      <div class="pinrow">
+        <input type="password" id="pinInput" inputmode="numeric" maxlength="12" placeholder="Code">
+        <button class="goldbtn" id="pinBtn">Unlock</button>
+      </div>
+      <div id="pinErr"></div>
+    </div>
+    <div id="adminBody" style="display:none; width:100%;">
+      <div class="ctl"><span class="lbl">Gemini API Key</span></div>
+      <div class="pinrow">
+        <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key here">
+        <button class="goldbtn" id="saveKeyBtn">Save</button>
+      </div>
+      <div class="ctl"><span class="lbl">Model</span>
+        <input type="text" id="modelInput" value="gemini-2.5-flash">
+      </div>
+      <div id="keyStatus" class="hint"></div>
+      <div class="pinrow" style="margin-top:12px;">
+        <button class="ghostbtn" id="removeKeyBtn">Remove key</button>
+        <button class="ghostbtn" id="lockBtn">Lock admin</button>
+        <button class="ghostbtn" id="hideAdminBtn">Hide tab</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">TinkerBott · Est. 2026 · Drive in Style</div>
+</div>
+
+<script>
+const UART_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const UART_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // write to micro:bit
+
+let rxChar = null;
+let lastSent = "";
+const statusEl = document.getElementById("status");
+const errEl = document.getElementById("err");
+const connectBtn = document.getElementById("connectBtn");
+const powerEl = document.getElementById("power");
+const powerVal = document.getElementById("powerVal");
+const gpModeEl = document.getElementById("gpMode");
+const enc = new TextEncoder();
+
+powerEl.addEventListener("input", () => { powerVal.textContent = powerEl.value + "%"; });
+function maxPower() { return parseInt(powerEl.value, 10); }
+function clamp(v) { return Math.max(-100, Math.min(100, Math.round(v))); }
+
+async function writeLine(s) {
+  if (!rxChar) return false;
+  try { await rxChar.writeValue(enc.encode(s + "\n")); return true; }
+  catch (e) { return false; }
+}
+
+// Send motor speeds to the car: "M<left>,<right>" each -100..100
+// Speeds are rounded to steps of 5 so tiny stick jitter doesn't flood the car with messages
+async function sendMotors(l, r) {
+  l = clamp(Math.round(l / 5) * 5); r = clamp(Math.round(r / 5) * 5);
+  const msg = "M" + l + "," + r;
+  document.querySelectorAll(".pad button").forEach(b => b.classList.remove("active"));
+  if (msg === lastSent) return;
+  if (await writeLine(msg)) lastSent = msg;
+}
+function stopCar() { sendMotors(0, 0); }
+
+connectBtn.addEventListener("click", async () => {
+  errEl.textContent = "";
+  if (!navigator.bluetooth) {
+    errEl.textContent = "This browser doesn't support Web Bluetooth. Use Chrome (or Edge) on the laptop.";
+    return;
+  }
+  try {
+    statusEl.textContent = "Pick your micro:bit from the list…";
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: "BBC micro:bit" }],
+      optionalServices: [UART_SERVICE]
+    });
+    device.addEventListener("gattserverdisconnected", () => {
+      rxChar = null; lastSent = "";
+      statusEl.textContent = "Disconnected — click Connect to reconnect";
+      connectBtn.disabled = false;
+    });
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(UART_SERVICE);
+    rxChar = await service.getCharacteristic(UART_RX);
+    statusEl.textContent = "✅ Connected to " + (device.name || "micro:bit") + " — drive!";
+    connectBtn.disabled = true;
+  } catch (e) {
+    statusEl.textContent = "Not connected";
+    if (e && e.name !== "NotFoundError") {
+      errEl.textContent = "Connection hiccup: " + e.message +
+        " — make sure the car's power is ON, it's close to the laptop, and laptop Bluetooth is ON, then try again.";
+    }
+  }
+});
+
+// On-screen buttons: hold to drive at Max power, release to stop
+const dirMotors = () => {
+  const p = maxPower();
+  return { F: [p, p], B: [-p, -p], L: [-p, p], R: [p, -p], S: [0, 0] };
+};
+document.querySelectorAll(".pad button").forEach(btn => {
+  const dir = btn.dataset.dir;
+  const start = e => { e.preventDefault(); const m = dirMotors()[dir]; sendMotors(m[0], m[1]); btn.classList.add("active"); };
+  const end = e => { e.preventDefault(); btn.classList.remove("active"); if (dir !== "S") stopCar(); };
+  btn.addEventListener("pointerdown", start);
+  btn.addEventListener("pointerup", end);
+  btn.addEventListener("pointerleave", end);
+  btn.addEventListener("pointercancel", end);
+});
+
+// Keyboard driving (digital, at Max power)
+const keyMap = {
+  KeyW: "F", ArrowUp: "F",
+  KeyS: "B", ArrowDown: "B",
+  KeyA: "L", ArrowLeft: "L",
+  KeyD: "R", ArrowRight: "R"
+};
+window.addEventListener("keydown", e => {
+  if (e.target && (e.target.tagName === "INPUT")) return;
+  const dir = keyMap[e.code];
+  if (dir) { e.preventDefault(); if (!e.repeat) { const m = dirMotors()[dir]; sendMotors(m[0], m[1]); } }
+});
+window.addEventListener("keyup", e => {
+  if (e.target && (e.target.tagName === "INPUT")) return;
+  if (keyMap[e.code]) { e.preventDefault(); stopCar(); }
+});
+
+// ---- PS4 / DualShock 4 — full mapping ----
+// Drive: R2 gas (analog), L2 reverse (analog), left stick steering, D-pad backup.
+// △ headlights on/off (H) · □ headlight color (C) · ✕ strobe party lights (X) · ○ sleep/wake (Z) · L1 sensor lights (V)
+// Touchpad light dance (P) · Share says HELLO on LED · PS shows NEHME on LED
+// L3 precision mode (half power) · R3 also strobe
+// Right stick up/down = gear shift (Max power +/-) · Options = emergency stop
+const gpStatus = document.getElementById("gpStatus");
+const GP_HELP = "🎮 <b>R2</b> gas · <b>L2</b> reverse · <b>left stick</b> steer · <b>△</b> lights · <b>□</b> light color · <b>✕</b> strobe · <b>○</b> sleep/wake · <b>L1</b> sensor lights · <b>L3</b> precision · <b>right stick ↕</b> power · <b>Share</b> HELLO · <b>touchpad</b> light dance";
+let gpWasDriving = false;
+let precisionMode = false;
+let prevBtns = [];
+let lastGearShift = 0;
+let comboStep = 0;
+
+window.addEventListener("gamepadconnected", e => {
+  gpStatus.innerHTML = "🎮 Controller connected: " + e.gamepad.id.slice(0, 40) + "<br>" + GP_HELP;
+});
+window.addEventListener("gamepaddisconnected", () => {
+  gpStatus.innerHTML = "🎮 PS4 controller: not detected yet — pair it with the laptop or plug it in by USB, then press any button.";
+  if (gpWasDriving) { gpWasDriving = false; stopCar(); }
+});
+
+function fireCommand(cmd) { writeLine(cmd).then(() => { lastSent = ""; }); }
+
+setInterval(() => {
+  const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null;
+  for (const g of gps) { if (g && g.connected) { gp = g; break; } }
+  if (!gp) return;
+
+  const pressed = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+  const justPressed = i => pressed(i) && !prevBtns[i];
+
+  // One-shot buttons (fire once per press)
+  if (justPressed(3)) fireCommand("H");            // Triangle: headlights toggle
+  if (justPressed(2)) fireCommand("C");            // Square: headlight color cycle
+  if (justPressed(1)) fireCommand("Z");            // Circle: sleep / wake
+  if (justPressed(4)) fireCommand("V");            // L1: sensor lights on/off
+  if (justPressed(0)) fireCommand("X");            // Cross: strobe party lights
+  if (justPressed(11)) fireCommand("X");           // R3: strobe too
+  if (justPressed(17)) fireCommand("P");           // Touchpad: light dance
+  if (justPressed(8)) fireCommand("THELLO");       // Share: LED says HELLO
+  if (justPressed(16)) fireCommand("TNEHME");      // PS: LED shows NEHME
+  if (justPressed(9)) { stopCar(); }               // Options: emergency stop
+  if (justPressed(10)) {                            // L3: precision mode toggle
+    precisionMode = !precisionMode;
+    gpModeEl.textContent = precisionMode ? "· 🐢 PRECISION MODE (half power)" : "";
+  }
+  // Secret admin combo: R1 → L1 → R1 → L1 → R3 (in order)
+  const COMBO = [5, 4, 5, 4, 11];
+  for (const i of [5, 4, 11]) {
+    if (justPressed(i)) {
+      if (i === COMBO[comboStep]) { comboStep++; } else { comboStep = (i === COMBO[0]) ? 1 : 0; }
+      if (comboStep === COMBO.length) { comboStep = 0; revealAdmin(); }
+    }
+  }
+
+  prevBtns = gp.buttons.map(b => b.pressed);
+
+  // Right stick Y = gear shift (Max power up/down), debounced
+  const ry = gp.axes[3] || 0;
+  const now = Date.now();
+  if (now - lastGearShift > 350) {
+    if (ry < -0.6 && maxPower() < 100) { powerEl.value = Math.min(100, maxPower() + 10); powerVal.textContent = powerEl.value + "%"; lastGearShift = now; }
+    if (ry > 0.6 && maxPower() > 20) { powerEl.value = Math.max(20, maxPower() - 10); powerVal.textContent = powerEl.value + "%"; lastGearShift = now; }
+  }
+
+  // Analog driving
+  const cap = (maxPower() / 100) * (precisionMode ? 0.5 : 1);
+  const r2 = gp.buttons[7] ? gp.buttons[7].value : 0;
+  const l2 = gp.buttons[6] ? gp.buttons[6].value : 0;
+  let throttle = (r2 - l2) * 100 * cap;
+  let steer = (gp.axes[0] || 0);
+  if (Math.abs(steer) < 0.12) steer = 0;
+  steer = steer * 100 * cap;
+  if (pressed(12)) throttle = 100 * cap;
+  if (pressed(13)) throttle = -100 * cap;
+  if (pressed(14)) steer = -100 * cap;
+  if (pressed(15)) steer = 100 * cap;
+
+  if (Math.abs(throttle) < 4 && steer === 0) {
+    if (gpWasDriving) { gpWasDriving = false; stopCar(); }
+    return;
+  }
+  gpWasDriving = true;
+  sendMotors(throttle + steer, throttle - steer);
+}, 100);
+
+// ---- Messenger modes ----
+document.querySelectorAll(".tabs button").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach(t => t.classList.remove("selected"));
+    tab.classList.add("selected");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
+    document.getElementById("panel-" + tab.dataset.mode).classList.add("show");
+  });
+});
+
+// LED message -> car
+const msgText = document.getElementById("msgText");
+const msgStatus = document.getElementById("msgStatus");
+document.getElementById("msgSend").addEventListener("click", async () => {
+  const text = msgText.value.trim().toUpperCase();
+  if (!text) { msgStatus.textContent = "Type a message first."; return; }
+  if (!rxChar) { msgStatus.textContent = "Connect to the car first (button at the top)."; return; }
+  stopCar();
+  const ok = await writeLine("T" + text);
+  lastSent = "";
+  msgStatus.textContent = ok ? "✅ Sent — watch the car's screen!" : "❌ Send failed — check the connection.";
+});
+msgText.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("msgSend").click(); });
+
+// Color wheel -> car headlights (sends "K<r>,<g>,<b>")
+const colorPick = document.getElementById("colorPick");
+colorPick.addEventListener("change", () => {
+  const hex = colorPick.value;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  fireCommand("K" + r + "," + g + "," + b);
+});
+
+// Robot voice -> this device speaks
+const ttsText = document.getElementById("ttsText");
+const ttsStatus = document.getElementById("ttsStatus");
+document.getElementById("ttsSpeak").addEventListener("click", () => {
+  const text = ttsText.value.trim();
+  if (!text) { ttsStatus.textContent = "Type a message first."; return; }
+  if (!("speechSynthesis" in window)) { ttsStatus.textContent = "This browser has no speech voice."; return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.pitch = 0.3;
+  u.rate = 0.9;
+  speechSynthesis.speak(u);
+  ttsStatus.textContent = "🤖 Speaking…";
+});
+
+// ---- Secret Admin tab (revealed by the controller combo) ----
+const adminCard = document.getElementById("adminCard");
+function revealAdmin() {
+  if (adminCard.style.display !== "none") return;
+  adminCard.style.display = "flex";
+  adminCard.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+const pinInput = document.getElementById("pinInput");
+const pinBtn = document.getElementById("pinBtn");
+const pinErr = document.getElementById("pinErr");
+const pinRow = document.getElementById("pinRow");
+const adminBody = document.getElementById("adminBody");
+const apiKeyInput = document.getElementById("apiKeyInput");
+const modelInput = document.getElementById("modelInput");
+const keyStatus = document.getElementById("keyStatus");
+
+function storedKey() {
+  try { return localStorage.getItem("geminiKey") || ""; } catch (e) { return window._gk || ""; }
+}
+function storeKey(k) {
+  window._gk = k;
+  try { if (k) localStorage.setItem("geminiKey", k); else localStorage.removeItem("geminiKey"); } catch (e) {}
+}
+function storedModel() {
+  try { return localStorage.getItem("geminiModel") || "gemini-2.5-flash"; } catch (e) { return window._gm || "gemini-2.5-flash"; }
+}
+function refreshKeyStatus() {
+  const k = storedKey();
+  keyStatus.textContent = k
+    ? "✅ API key saved (ends in …" + k.slice(-4) + "). The Gemini tab is ready."
+    : "No API key saved yet — paste one above and tap Save.";
+  modelInput.value = storedModel();
+}
+function tryUnlock() {
+  if (pinInput.value === "4458") {
+    pinErr.textContent = "";
+    pinRow.style.display = "none";
+    adminBody.style.display = "block";
+    refreshKeyStatus();
+  } else {
+    pinErr.textContent = "❌ Wrong code.";
+  }
+}
+pinBtn.addEventListener("click", tryUnlock);
+pinInput.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
+document.getElementById("saveKeyBtn").addEventListener("click", () => {
+  storeKey(apiKeyInput.value.trim());
+  window._gm = modelInput.value.trim() || "gemini-2.5-flash";
+  try { localStorage.setItem("geminiModel", window._gm); } catch (e) {}
+  apiKeyInput.value = "";
+  refreshKeyStatus();
+});
+document.getElementById("removeKeyBtn").addEventListener("click", () => { storeKey(""); refreshKeyStatus(); });
+document.getElementById("lockBtn").addEventListener("click", () => {
+  adminBody.style.display = "none";
+  pinRow.style.display = "block";
+  pinInput.value = "";
+});
+document.getElementById("hideAdminBtn").addEventListener("click", () => {
+  adminCard.style.display = "none";
+  adminBody.style.display = "none";
+  pinRow.style.display = "block";
+  pinInput.value = "";
+});
+
+// ---- Gemini AI chat ----
+const chatBox = document.getElementById("chatBox");
+const chatInput = document.getElementById("chatInput");
+const chatSend = document.getElementById("chatSend");
+const chatHistory = [];
+const GEMINI_SYSTEM = [
+  "You are Gemini, the built-in explainer inside Nehme's TinkerBott robot car controller page.",
+  "Your job: explain anything the user does not understand — the car, its controls, the micro:bit, MakeCode, coding words, or general questions — in simple, clear, friendly language a smart 9th grader can follow.",
+  "Keep answers short (a few sentences) unless the user asks for more detail. Use plain words. If a word is technical, explain it.",
+  "Controller map for this car: R2 = gas, L2 = reverse, left stick = steering, D-pad = drive too. Triangle = headlights on/off. Square = headlight color. Cross = strobe lights. Circle = sleep/wake. L1 = sensor lights (headlights turn green/yellow/red by distance, and the screen shows the distance in cm). L3 = precision mode (half power). Right stick up/down = max power. Share = car screen shows HELLO. PS button = car screen shows NEHME. Touchpad = light dance. Options = emergency stop.",
+  "The car has no speaker sound features and no battery percentage — its batteries are 3 AA batteries."
+].join("\n");
+
+function addMsg(text, who) {
+  const d = document.createElement("div");
+  d.className = "msg " + who;
+  d.textContent = text;
+  chatBox.appendChild(d);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  return d;
+}
+addMsg("👋 Hi! I'm Gemini. Ask me anything you don't understand — what a button does, what a word means, anything at all.", "ai");
+
+async function askGemini() {
+  const q = chatInput.value.trim();
+  if (!q) return;
+  const key = storedKey();
+  if (!key) {
+    addMsg(q, "user");
+    chatInput.value = "";
+    addMsg("🔐 I don't have an API key yet. An admin needs to add one in the secret Admin tab first.", "ai");
+    return;
+  }
+  addMsg(q, "user");
+  chatInput.value = "";
+  chatHistory.push({ role: "user", parts: [{ text: q }] });
+  const thinking = addMsg("…thinking", "ai");
+  chatSend.disabled = true;
+  try {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + storedModel() + ":generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-goog-api-key": key },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: GEMINI_SYSTEM }] },
+        contents: chatHistory.slice(-12)
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error && data.error.message) || ("HTTP " + res.status));
+    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+    const text = parts.map(p => p.text || "").join("") || "(no answer)";
+    thinking.textContent = text;
+    chatHistory.push({ role: "model", parts: [{ text }] });
+  } catch (e) {
+    thinking.textContent = "⚠️ Gemini error: " + e.message + " — check the API key in the Admin tab.";
+    chatHistory.pop();
+  }
+  chatSend.disabled = false;
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+chatSend.addEventListener("click", askGemini);
+chatInput.addEventListener("keydown", e => { if (e.key === "Enter") askGemini(); });
+</script>
+</body>
+</html>
